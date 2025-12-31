@@ -20,5 +20,5 @@ spring:
 
 telegram:
   bot:
-    token: ${TELEGRAM_BOT_TOKEN}
-    username: ${TELEGRAM_BOT_USERNAME:ExpTrackerBot}
+    token: 8570313330:AAG8dvnYFsPTw52V57LKtxFIA6QUGOAmbsM
+    username: ExpTrackerBot
