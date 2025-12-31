@@ -1,27 +1,27 @@
-spring:
-  application:
-    name: expensetracker
+# ---- Build stage ----
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+WORKDIR /app
 
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/expense_tracker}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+# Copy everything required for build
+COPY pom.xml .
+COPY .mvn .mvn
+COPY mvnw .
 
-  server:
-  port: ${PORT:8080}
+# Pre-download dependencies (cache-friendly)
+RUN chmod +x mvnw && ./mvnw -B dependency:go-offline
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false   # turn off noisy SQL logs in cloud
+# Copy source AFTER deps (this fixes your error)
+COPY src src
 
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    baseline-version: 1
+# Build the jar
+RUN ./mvnw -B clean package -DskipTests
 
-telegram:
-  bot:
-    token: ${TELEGRAM_BOT_TOKEN}
-    username: ${TELEGRAM_BOT_USERNAME:ExpTrackerBot}
+
+# ---- Runtime stage ----
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","app.jar"]
